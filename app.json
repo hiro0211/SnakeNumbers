@@ -15,7 +15,10 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "buildNumber": "1",
-      "appleId": "6746485493"
+      "appleId": "6746485493",
+      "entitlements": {
+        "com.apple.developer.game-center": true
+      }
     },
     "android": {
       "adaptiveIcon": {
