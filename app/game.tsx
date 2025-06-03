@@ -15,6 +15,8 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import AdBanner from "@/components/AdBanner";
+import useInterstitialAd from "@/hooks/useInterstitialAd";
 
 const { width, height } = Dimensions.get("window");
 const GRID_SIZE = 16;
@@ -70,6 +72,9 @@ export default function GameScreen() {
   const numbersRef = useRef<NumberItem[]>([]);
   const nextNumberRef = useRef(1);
   const scoreRef = useRef(0);
+
+  // インタースティシャル広告hook
+  const { showAd: showInterstitialAd } = useInterstitialAd();
 
   // refを更新
   useEffect(() => {
@@ -129,6 +134,14 @@ export default function GameScreen() {
         "numberSnakeScoreHistory",
         JSON.stringify(history)
       );
+
+      // ゲームオーバー時にインタースティシャル広告を表示
+      // スコアが一定以上の場合のみ表示
+      if (newScore >= 50) {
+        setTimeout(() => {
+          showInterstitialAd();
+        }, 1000); // 1秒後に表示
+      }
     } catch (error) {
       console.error("Error saving score:", error);
     }
@@ -503,21 +516,28 @@ export default function GameScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Score Display */}
+      {/* Score Board */}
       <View style={styles.scoreBoard}>
         <View style={styles.scoreItem}>
           <Text style={styles.scoreLabel}>Score</Text>
           <Text style={styles.scoreValue}>{score}</Text>
         </View>
         <View style={styles.scoreItem}>
+          <Text style={styles.scoreLabel}>High Score</Text>
+          <Text style={styles.scoreValue}>{highScore}</Text>
+        </View>
+        <View style={styles.scoreItem}>
           <Text style={styles.scoreLabel}>Next</Text>
           <Text style={styles.nextNumberDisplay}>{nextNumber}</Text>
         </View>
         <View style={styles.scoreItem}>
-          <Text style={styles.scoreLabel}>High Score</Text>
-          <Text style={styles.scoreValue}>{highScore}</Text>
+          <Text style={styles.scoreLabel}>Speed</Text>
+          <Text style={styles.scoreValue}>{(300 - speed).toString()}</Text>
         </View>
       </View>
+
+      {/* バナー広告 */}
+      <AdBanner />
 
       {/* Game Grid */}
       <View style={styles.gameContainer} {...panResponder.panHandlers}>

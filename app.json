@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.numbersnake.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "GADApplicationIdentifier": "ca-app-pub-6259770208793369~6003764971"
       },
       "buildNumber": "1",
       "appleId": "6746485493",
@@ -43,6 +44,13 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#1a1a2e"
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-6259770208793369~6003764971",
+          "iosAppId": "ca-app-pub-6259770208793369~6003764971"
         }
       ]
     ],
