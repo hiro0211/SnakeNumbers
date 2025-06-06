@@ -2,7 +2,7 @@
   "expo": {
     "name": "SnakeNumbers",
     "slug": "SnakeNumbers",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/SnakeNumbersIcon.png",
     "scheme": "snakenumbers",
@@ -15,7 +15,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "GADApplicationIdentifier": "ca-app-pub-6259770208793369~6003764971"
       },
-      "buildNumber": "1",
+      "buildNumber": "2",
       "appleId": "6746485493",
       "entitlements": {
         "com.apple.developer.game-center": true
@@ -28,7 +28,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.snakenumbers.app",
-      "versionCode": 1
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",
