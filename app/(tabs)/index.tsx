@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AdBanner from "@/components/AdBanner";
+// import AdBanner from "@/components/AdBanner";
 
 const { width, height } = Dimensions.get("window");
 
@@ -45,12 +45,24 @@ export default function HomeScreen() {
 
   const showInstructions = () => {
     Alert.alert(
-      "How to Play",
-      "🐍 Control the snake to eat numbers in ascending order (1→2→3...)!\n\n" +
-        "📱 Swipe or tap on the screen to move\n" +
-        "🎯 The next number to eat is highlighted in gold\n" +
-        "⚡ Speed ​​increases every 5 numbers eaten\n" +
-        "❌ Game over if you eat numbers in the wrong order",
+      "遊び方",
+      "【基本ルール】\n" +
+        "🐍 ヘビを操作して、数字を順番通り（1→2→3...）に食べていくゲームです。\n" +
+        "📱 スワイプか画面タップでヘビを動かせます。\n" +
+        "🎯 次に食べるべき数字は金色にハイライトされます。\n" +
+        "❌ 間違った数字を食べたり、壁や自分自身にぶつかるとゲームオーバーです。\n\n" +
+        "【ゲームの進め方】\n" +
+        "📈 スコアを稼いでレベルアップ！レベルが上がると新しいスキンが解放されます。\n" +
+        "🔥 連続で数字を食べるとストリークボーナス！スコア倍率がアップします。\n\n" +
+        "【ボーナスアイテム】\n" +
+        "⭐ スコア倍増: 5回だけスコアが2倍に！\n" +
+        "❄️ 時間停止: 3秒間ヘビがストップ！\n" +
+        "✂️ シュリンク: ヘビの体が半分に！\n\n" +
+        "【危険な要素】\n" +
+        "🧱 障害物: レベル3から出現。ぶつからないように！\n" +
+        "⏰ 時間制限数字: レベル8から出現。消える前に急いでゲット！\n" +
+        "💀 毒数字: レベル15から出現。絶対に食べないで！\n\n" +
+        "🏆 アチーブメントを達成して、ハイスコアを目指そう！",
       [{ text: "OK", style: "default" }]
     );
   };
@@ -86,8 +98,8 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* バナー広告 */}
-      <AdBanner />
+      {/* バナー広告（一時的に無効化） */}
+      {/* <AdBanner /> */}
 
       {/* Decoration */}
       <View style={styles.decoration}>
