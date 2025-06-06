@@ -184,40 +184,40 @@ const SNAKE_SKINS: SnakeSkin[] = [
 const ACHIEVEMENTS: Achievement[] = [
   {
     id: "first_game",
-    name: "初プレイ",
-    description: "初めてゲームをプレイ",
+    name: "First Game",
+    description: "Play your first game",
     icon: "🎮",
     condition: (stats) => stats.gamesPlayed >= 1,
     unlocked: false,
   },
   {
     id: "score_100",
-    name: "百点突破",
-    description: "100点以上獲得",
+    name: "Score 100",
+    description: "Get over 100 points",
     icon: "💯",
     condition: (stats) => stats.highScore >= 100,
     unlocked: false,
   },
   {
     id: "score_500",
-    name: "五百点突破",
-    description: "500点以上獲得",
+    name: "Score 500",
+    description: "Get over 500 points",
     icon: "⭐",
     condition: (stats) => stats.highScore >= 500,
     unlocked: false,
   },
   {
     id: "streak_10",
-    name: "連続マスター",
-    description: "10回連続で正解",
+    name: "Streak Master",
+    description: "Get a streak of 10",
     icon: "🔥",
     condition: (stats) => stats.bestStreak >= 10,
     unlocked: false,
   },
   {
     id: "long_snake",
-    name: "巨大蛇",
-    description: "蛇の長さ20以上",
+    name: "Giant Snake",
+    description: "Reach a snake length of 20",
     icon: "🐲",
     condition: (stats) => stats.longestSnake >= 20,
     unlocked: false,
@@ -1388,7 +1388,7 @@ export default function GameScreen() {
         >
           <Text style={styles.achievementIcon}>{showAchievement.icon}</Text>
           <View style={styles.achievementTextContainer}>
-            <Text style={styles.achievementTitle}>アチーブメント獲得！</Text>
+            <Text style={styles.achievementTitle}>Achievement Unlocked!</Text>
             <Text style={styles.achievementName}>{showAchievement.name}</Text>
             <Text style={styles.achievementDescription}>
               {showAchievement.description}

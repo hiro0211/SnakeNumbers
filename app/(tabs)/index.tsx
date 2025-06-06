@@ -45,24 +45,24 @@ export default function HomeScreen() {
 
   const showInstructions = () => {
     Alert.alert(
-      "遊び方",
-      "【基本ルール】\n" +
-        "🐍 ヘビを操作して、数字を順番通り（1→2→3...）に食べていくゲームです。\n" +
-        "📱 スワイプか画面タップでヘビを動かせます。\n" +
-        "🎯 次に食べるべき数字は金色にハイライトされます。\n" +
-        "❌ 間違った数字を食べたり、壁や自分自身にぶつかるとゲームオーバーです。\n\n" +
-        "【ゲームの進め方】\n" +
-        "📈 スコアを稼いでレベルアップ！レベルが上がると新しいスキンが解放されます。\n" +
-        "🔥 連続で数字を食べるとストリークボーナス！スコア倍率がアップします。\n\n" +
-        "【ボーナスアイテム】\n" +
-        "⭐ スコア倍増: 5回だけスコアが2倍に！\n" +
-        "❄️ 時間停止: 3秒間ヘビがストップ！\n" +
-        "✂️ シュリンク: ヘビの体が半分に！\n\n" +
-        "【危険な要素】\n" +
-        "🧱 障害物: レベル3から出現。ぶつからないように！\n" +
-        "⏰ 時間制限数字: レベル8から出現。消える前に急いでゲット！\n" +
-        "💀 毒数字: レベル15から出現。絶対に食べないで！\n\n" +
-        "🏆 アチーブメントを達成して、ハイスコアを目指そう！",
+      "How to Play",
+      "【Basic Rules】\n" +
+        "🐍 Control the snake to eat numbers in ascending order (1→2→3...).\n" +
+        "📱 Swipe or tap on the screen to move the snake.\n" +
+        "🎯 The next number to eat is highlighted in gold.\n" +
+        "❌ The game is over if you eat a number in the wrong order, hit a wall, or hit yourself.\n\n" +
+        "【Progression】\n" +
+        "📈 Level up by earning score! New skins are unlocked as you level up.\n" +
+        "🔥 Get a streak bonus by eating numbers consecutively! The score multiplier will increase.\n\n" +
+        "【Bonus Items】\n" +
+        "⭐ Score Multiplier: Doubles your score for the next 5 numbers!\n" +
+        "❄️ Time Freeze: The snake stops for 3 seconds!\n" +
+        "✂️ Shrink: The snake's body becomes half its length!\n\n" +
+        "【Dangerous Elements】\n" +
+        "🧱 Obstacles: Appear from level 3. Don't hit them!\n" +
+        "⏰ Time-Limited Numbers: Appear from level 8. Get them before they disappear!\n" +
+        "💀 Poisonous Numbers: Appear from level 15. Don't eat them!\n\n" +
+        "🏆 Complete achievements and aim for a high score!",
       [{ text: "OK", style: "default" }]
     );
   };
