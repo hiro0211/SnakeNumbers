@@ -28,11 +28,11 @@ import {
 const { width, height } = Dimensions.get("window");
 const GRID_SIZE = 16;
 const MARGIN = 30; // 画面端の余白
-const AVAILABLE_SIZE = Math.min(width - MARGIN * 2, height - 300); // ヘッダーとUIを除いた利用可能サイズ
+const AVAILABLE_SIZE = Math.min(width - MARGIN * 2, height * 0.8); // ヘッダーとUIを除いた利用可能サイズ
 const CELL_SIZE = AVAILABLE_SIZE / GRID_SIZE;
 
 // ゲームの状態
-type GameState = "playing" | "paused" | "gameOver";
+type GameState = "playing" | "paused" | "gameOver" | "howToPlay";
 
 // 方向
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
