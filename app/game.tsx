@@ -375,6 +375,7 @@ export default function GameScreen() {
     null
   );
   const [level, setLevel] = useState(1);
+  const [showGameOver, setShowGameOver] = useState(false);
 
   // アニメーション
   const achievementOpacity = useRef(new Animated.Value(0)).current;
@@ -995,25 +996,9 @@ export default function GameScreen() {
         // Save data
         await saveGameData(newStats, newAchievements, currentSkinId);
 
-        // Show alert
+        // Show game over screen
         setTimeout(() => {
-          Alert.alert(
-            "Game Over",
-            `Score: ${finalScore}\nHigh Score: ${newHighScore}`,
-            [
-              {
-                text: "Retry",
-                onPress: () => {
-                  setGameState("playing");
-                  initializeGame();
-                },
-              },
-              {
-                text: "Back to Home",
-                onPress: () => router.replace("/(tabs)"),
-              },
-            ]
-          );
+          setShowGameOver(true);
         }, 100);
       };
 
@@ -1264,11 +1249,19 @@ export default function GameScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={togglePause} style={styles.pauseButton}>
-          <Text style={styles.pauseButtonText}>
-            {gameState === "paused" ? "▶️" : "⏸️"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={() => setGameState("howToPlay")}
+            style={styles.helpButton}
+          >
+            <Text style={styles.helpButtonText}>?</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={togglePause} style={styles.pauseButton}>
+            <Text style={styles.pauseButtonText}>
+              {gameState === "paused" ? "▶️" : "⏸️"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Score Board */}
