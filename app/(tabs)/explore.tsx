@@ -34,10 +34,19 @@ export default function RankingScreen() {
 
   const loadScoreData = async () => {
     try {
-      // ハイスコア読み込み
-      const highScoreData = await AsyncStorage.getItem("numberSnakeHighScore");
-      if (highScoreData !== null) {
-        setHighScore(parseInt(highScoreData));
+      // ゲーム統計データからハイスコアを読み込み
+      const statsData = await AsyncStorage.getItem("numberSnakeStats");
+      if (statsData) {
+        const stats = JSON.parse(statsData);
+        setHighScore(stats.highScore || 0);
+      } else {
+        // 旧バージョンとの互換性のため
+        const highScoreData = await AsyncStorage.getItem(
+          "numberSnakeHighScore"
+        );
+        if (highScoreData !== null) {
+          setHighScore(parseInt(highScoreData));
+        }
       }
 
       // スコア履歴読み込み
@@ -64,8 +73,12 @@ export default function RankingScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem("numberSnakeHighScore");
+              // 新しい統計データをクリア
+              await AsyncStorage.removeItem("numberSnakeStats");
               await AsyncStorage.removeItem("numberSnakeScoreHistory");
+              await AsyncStorage.removeItem("numberSnakeAchievements");
+              // 旧データもクリア（互換性のため）
+              await AsyncStorage.removeItem("numberSnakeHighScore");
               setHighScore(0);
               setScoreHistory([]);
               Alert.alert("Success", "All data has been deleted.");

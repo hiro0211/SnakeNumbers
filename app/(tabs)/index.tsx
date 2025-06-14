@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   Dimensions,
   StatusBar,
   StyleSheet,
@@ -16,6 +15,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const [highScore, setHighScore] = useState(0);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   useEffect(() => {
     loadHighScore();
@@ -30,9 +30,17 @@ export default function HomeScreen() {
 
   const loadHighScore = async () => {
     try {
-      const score = await AsyncStorage.getItem("numberSnakeHighScore");
-      if (score !== null) {
-        setHighScore(parseInt(score));
+      // ゲーム統計データからハイスコアを読み込み
+      const statsData = await AsyncStorage.getItem("numberSnakeStats");
+      if (statsData) {
+        const stats = JSON.parse(statsData);
+        setHighScore(stats.highScore || 0);
+      } else {
+        // 旧バージョンとの互換性のため
+        const score = await AsyncStorage.getItem("numberSnakeHighScore");
+        if (score !== null) {
+          setHighScore(parseInt(score));
+        }
       }
     } catch (error) {
       console.error("Failed to load high score:", error);
@@ -44,27 +52,7 @@ export default function HomeScreen() {
   };
 
   const showInstructions = () => {
-    Alert.alert(
-      "How to Play",
-      "【Basic Rules】\n" +
-        "🐍 Control the snake to eat numbers in ascending order (1→2→3...).\n" +
-        "📱 Swipe or tap on the screen to move the snake.\n" +
-        "🎯 The next number to eat is highlighted in gold.\n" +
-        "❌ The game is over if you eat a number in the wrong order, hit a wall, or hit yourself.\n\n" +
-        "【Progression】\n" +
-        "📈 Level up by earning score! New skins are unlocked as you level up.\n" +
-        "🔥 Get a streak bonus by eating numbers consecutively! The score multiplier will increase.\n\n" +
-        "【Bonus Items】\n" +
-        "⭐ Score Multiplier: Doubles your score for the next 5 numbers!\n" +
-        "❄️ Time Freeze: The snake stops for 3 seconds!\n" +
-        "✂️ Shrink: The snake's body becomes half its length!\n\n" +
-        "【Dangerous Elements】\n" +
-        "🧱 Obstacles: Appear from level 3. Don't hit them!\n" +
-        "⏰ Time-Limited Numbers: Appear from level 8. Get them before they disappear!\n" +
-        "💀 Poisonous Numbers: Appear from level 15. Don't eat them!\n\n" +
-        "🏆 Complete achievements and aim for a high score!",
-      [{ text: "OK", style: "default" }]
-    );
+    setShowHowToPlay(true);
   };
 
   return (
@@ -105,6 +93,71 @@ export default function HomeScreen() {
       <View style={styles.decoration}>
         <Text style={styles.decorationText}>1 2 3 4 5 6 7 8 9</Text>
       </View>
+
+      {/* How To Play Screen */}
+      {showHowToPlay && (
+        <View style={styles.howToPlayOverlay}>
+          <View style={styles.howToPlayContainer}>
+            <Text style={styles.howToPlayTitle}>How To Play</Text>
+            <View style={styles.howToPlayContent}>
+              <Text style={styles.howToPlayText}>
+                🎯 <Text style={styles.bold}>Objective:</Text>
+              </Text>
+              <Text style={styles.howToPlayText}>
+                Eat numbers in sequence (1→2→3...→9→1)
+              </Text>
+
+              <Text style={styles.howToPlayText}>
+                🎮 <Text style={styles.bold}>Controls:</Text>
+              </Text>
+              <Text style={styles.howToPlayText}>
+                • Swipe or tap to change direction
+              </Text>
+              <Text style={styles.howToPlayText}>
+                • Avoid walls and obstacles
+              </Text>
+
+              <Text style={styles.howToPlayText}>
+                🔢 <Text style={styles.bold}>Numbers:</Text>
+              </Text>
+              <Text style={styles.howToPlayText}>
+                • Yellow: Target number to eat
+              </Text>
+              <Text style={styles.howToPlayText}>• Gray: Other numbers</Text>
+              <Text style={styles.howToPlayText}>
+                • Red: Poisonous (avoid!)
+              </Text>
+              <Text style={styles.howToPlayText}>• Blinking: Time-limited</Text>
+
+              <Text style={styles.howToPlayText}>
+                ⭐ <Text style={styles.bold}>Bonuses:</Text>
+              </Text>
+              <Text style={styles.howToPlayText}>• ⭐ Score multiplier</Text>
+              <Text style={styles.howToPlayText}>• ❄️ Time freeze</Text>
+              <Text style={styles.howToPlayText}>• ✂️ Shrink snake</Text>
+
+              <Text style={styles.howToPlayText}>
+                🏆 <Text style={styles.bold}>Scoring:</Text>
+              </Text>
+              <Text style={styles.howToPlayText}>
+                • Eat correct numbers for points
+              </Text>
+              <Text style={styles.howToPlayText}>
+                • Build streaks for bonus multipliers
+              </Text>
+              <Text style={styles.howToPlayText}>
+                • Unlock achievements and skins
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowHowToPlay(false)}
+            >
+              <Text style={styles.closeButtonText}>Got It!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -208,5 +261,56 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#4ade80",
     letterSpacing: 8,
+  },
+  howToPlayOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  howToPlayContainer: {
+    backgroundColor: "#1f2937",
+    borderRadius: 20,
+    padding: 25,
+    maxWidth: "90%",
+    maxHeight: "80%",
+    borderWidth: 2,
+    borderColor: "#4ade80",
+  },
+  howToPlayTitle: {
+    color: "#4ade80",
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  howToPlayContent: {
+    marginBottom: 20,
+  },
+  howToPlayText: {
+    color: "#e5e7eb",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  bold: {
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
+  closeButton: {
+    backgroundColor: "#4ade80",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignSelf: "center",
+  },
+  closeButtonText: {
+    color: "#1a1a2e",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

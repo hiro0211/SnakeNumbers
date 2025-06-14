@@ -28,6 +28,7 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
 *.pem
 
 # local env files
@@ -37,3 +38,8 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+🐍 Classic snake game meets number puzzle! 
+Eat numbers 1-9 in sequence to grow your snake. 
+50+ levels, 6 skins, brain-training fun!
+Perfect for commuting and quick breaks.
