@@ -9,7 +9,6 @@ import React, {
   useState,
 } from "react";
 import {
-  Alert,
   Dimensions,
   PanResponder,
   StatusBar,
@@ -342,6 +341,8 @@ const GameCell = React.memo(
   }
 );
 
+GameCell.displayName = "GameCell";
+
 export default function GameScreen() {
   const [snake, setSnake] = useState<Position[]>([{ x: 8, y: 8 }]);
   const [direction, setDirection] = useState<Direction>("RIGHT");
@@ -495,15 +496,6 @@ export default function GameScreen() {
     }
   }, [multiplierDuration]);
 
-  // ハイスコア読み込み
-  useEffect(() => {
-    loadGameData();
-  }, []);
-
-  useEffect(() => {
-    initializeGame();
-  }, [loadGameData, initializeGame]);
-
   const loadGameData = useCallback(async () => {
     try {
       const statsData = await AsyncStorage.getItem("numberSnakeStats");
@@ -525,8 +517,8 @@ export default function GameScreen() {
           prev.map((ach) => ({
             ...ach,
             unlocked:
-              unlockedAchievements.find((ua) => ua.id === ach.id)?.unlocked ||
-              false,
+              unlockedAchievements.find((ua: any) => ua.id === ach.id)
+                ?.unlocked || false,
           }))
         );
       }
@@ -581,6 +573,15 @@ export default function GameScreen() {
     setComboMultiplier(1);
     gameOverHandled.current = false; // ゲーム開始時にフラグをリセット
   }, []);
+
+  // ハイスコア読み込み
+  useEffect(() => {
+    loadGameData();
+  }, [loadGameData]);
+
+  useEffect(() => {
+    initializeGame();
+  }, [initializeGame]);
 
   const moveSnake = useCallback(() => {
     setSnake((currentSnake) => {
@@ -995,26 +996,7 @@ export default function GameScreen() {
         // Save data
         await saveGameData(newStats, newAchievements, currentSkinId);
 
-        // Show alert
-        setTimeout(() => {
-          Alert.alert(
-            "Game Over",
-            `Score: ${finalScore}\nHigh Score: ${newHighScore}`,
-            [
-              {
-                text: "Retry",
-                onPress: () => {
-                  setGameState("playing");
-                  initializeGame();
-                },
-              },
-              {
-                text: "Back to Home",
-                onPress: () => router.replace("/(tabs)"),
-              },
-            ]
-          );
-        }, 100);
+        // カスタムゲームオーバーUIを表示（Alertは削除）
       };
 
       handleGameOver();
@@ -1264,11 +1246,19 @@ export default function GameScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={togglePause} style={styles.pauseButton}>
-          <Text style={styles.pauseButtonText}>
-            {gameState === "paused" ? "▶️" : "⏸️"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            onPress={() => setGameState("howToPlay")}
+            style={styles.helpButton}
+          >
+            <Text style={styles.helpButtonText}>?</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={togglePause} style={styles.pauseButton}>
+            <Text style={styles.pauseButtonText}>
+              {gameState === "paused" ? "▶️" : "⏸️"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Score Board */}
@@ -1406,6 +1396,125 @@ export default function GameScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Game Over Dialog */}
+      {gameState === "gameOver" && (
+        <View style={styles.dialogOverlay}>
+          <View style={styles.gameOverDialog}>
+            <Text style={styles.gameOverTitle}>Game Over</Text>
+            <Text style={styles.currentScoreText}>Score: {score}</Text>
+            <Text style={styles.highScoreText}>High Score: {highScore}</Text>
+            <View style={styles.dialogButtons}>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => {
+                  setGameState("playing");
+                  initializeGame();
+                }}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.homeButton}
+                onPress={() => router.replace("/(tabs)")}
+              >
+                <Text style={styles.homeButtonText}>Home</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* How To Play Dialog */}
+      {gameState === "howToPlay" && (
+        <View style={styles.dialogOverlay}>
+          <View style={styles.howToPlayDialog}>
+            <Text style={styles.howToPlayTitle}>How To Play</Text>
+
+            <View style={styles.howToPlayContent}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🎯</Text>
+                <Text style={styles.sectionTitle}>Objective:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                Eat numbers in sequence (1→2→3...→9→1)
+              </Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🎮</Text>
+                <Text style={styles.sectionTitle}>Controls:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                • Swipe or tap to change direction
+              </Text>
+              <Text style={styles.sectionText}>
+                • Avoid walls and obstacles
+              </Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🔢</Text>
+                <Text style={styles.sectionTitle}>Numbers:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                • Yellow: Target number to eat
+              </Text>
+              <Text style={styles.sectionText}>• Gray: Other numbers</Text>
+              <Text style={styles.sectionText}>• Red: Poisonous (avoid!)</Text>
+              <Text style={styles.sectionText}>• Blinking: Time-limited</Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>⭐</Text>
+                <Text style={styles.sectionTitle}>Bonuses:</Text>
+              </View>
+              <Text style={styles.sectionText}>• ⭐ Score multiplier</Text>
+              <Text style={styles.sectionText}>• ❄️ Time freeze</Text>
+              <Text style={styles.sectionText}>• ✂️ Shrink snake</Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🏆</Text>
+                <Text style={styles.sectionTitle}>Scoring:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                • Eat correct numbers for points
+              </Text>
+              <Text style={styles.sectionText}>
+                • Build streaks for bonus multipliers
+              </Text>
+              <Text style={styles.sectionText}>
+                • Unlock achievements and skins
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.gotItButton}
+              onPress={() => setGameState("playing")}
+            >
+              <Text style={styles.gotItButtonText}>Got It!</Text>
+            </TouchableOpacity>
+
+            {/* Bottom Navigation */}
+            <View style={styles.bottomNavigation}>
+              <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => router.replace("/(tabs)")}
+              >
+                <Text style={styles.navIcon}>🏠</Text>
+                <Text style={styles.navLabel}>Home</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => {
+                  // Navigate to rankings - you may need to implement this route
+                  // router.push("/rankings");
+                }}
+              >
+                <Text style={styles.navIcon}>🏆</Text>
+                <Text style={styles.navLabel}>Rankings</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -1431,6 +1540,24 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: "#94a3b8",
     fontSize: 16,
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  helpButton: {
+    backgroundColor: "#22c55e",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  helpButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   pauseButton: {
     padding: 10,
@@ -1655,5 +1782,148 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     fontSize: 12,
     marginTop: 2,
+  },
+  dialogOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  gameOverDialog: {
+    backgroundColor: "#1f2937",
+    borderRadius: 15,
+    padding: 30,
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#ef4444",
+    minWidth: 300,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 15,
+  },
+  gameOverTitle: {
+    color: "#ef4444",
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  currentScoreText: {
+    color: "#ffffff",
+    fontSize: 20,
+    marginBottom: 10,
+  },
+  highScoreText: {
+    color: "#fbbf24",
+    fontSize: 20,
+    marginBottom: 30,
+  },
+  dialogButtons: {
+    flexDirection: "row",
+    gap: 15,
+  },
+  retryButton: {
+    backgroundColor: "#22c55e",
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  retryButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  homeButton: {
+    backgroundColor: "#6b7280",
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  homeButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  howToPlayDialog: {
+    backgroundColor: "#1f2937",
+    borderRadius: 15,
+    padding: 20,
+    borderWidth: 3,
+    borderColor: "#22c55e",
+    maxWidth: 350,
+    maxHeight: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 15,
+  },
+  howToPlayTitle: {
+    color: "#22c55e",
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  howToPlayContent: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  sectionIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  sectionTitle: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  sectionText: {
+    color: "#e5e7eb",
+    fontSize: 14,
+    marginBottom: 3,
+    marginLeft: 24,
+  },
+  gotItButton: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  gotItButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  bottomNavigation: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    borderTopWidth: 1,
+    borderTopColor: "#374151",
+    paddingTop: 15,
+  },
+  navItem: {
+    alignItems: "center",
+  },
+  navIcon: {
+    fontSize: 20,
+    marginBottom: 5,
+  },
+  navLabel: {
+    color: "#9ca3af",
+    fontSize: 12,
   },
 });
