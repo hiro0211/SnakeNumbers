@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   Dimensions,
   StatusBar,
   StyleSheet,
@@ -16,6 +15,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const [highScore, setHighScore] = useState(0);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   useEffect(() => {
     loadHighScore();
@@ -44,27 +44,7 @@ export default function HomeScreen() {
   };
 
   const showInstructions = () => {
-    Alert.alert(
-      "How to Play",
-      "【Basic Rules】\n" +
-        "🐍 Control the snake to eat numbers in ascending order (1→2→3...).\n" +
-        "📱 Swipe or tap on the screen to move the snake.\n" +
-        "🎯 The next number to eat is highlighted in gold.\n" +
-        "❌ The game is over if you eat a number in the wrong order, hit a wall, or hit yourself.\n\n" +
-        "【Progression】\n" +
-        "📈 Level up by earning score! New skins are unlocked as you level up.\n" +
-        "🔥 Get a streak bonus by eating numbers consecutively! The score multiplier will increase.\n\n" +
-        "【Bonus Items】\n" +
-        "⭐ Score Multiplier: Doubles your score for the next 5 numbers!\n" +
-        "❄️ Time Freeze: The snake stops for 3 seconds!\n" +
-        "✂️ Shrink: The snake's body becomes half its length!\n\n" +
-        "【Dangerous Elements】\n" +
-        "🧱 Obstacles: Appear from level 3. Don't hit them!\n" +
-        "⏰ Time-Limited Numbers: Appear from level 8. Get them before they disappear!\n" +
-        "💀 Poisonous Numbers: Appear from level 15. Don't eat them!\n\n" +
-        "🏆 Complete achievements and aim for a high score!",
-      [{ text: "OK", style: "default" }]
-    );
+    setShowHowToPlay(true);
   };
 
   return (
@@ -105,6 +85,76 @@ export default function HomeScreen() {
       <View style={styles.decoration}>
         <Text style={styles.decorationText}>1 2 3 4 5 6 7 8 9</Text>
       </View>
+
+      {/* How To Play Dialog */}
+      {showHowToPlay && (
+        <View style={styles.dialogOverlay}>
+          <View style={styles.howToPlayDialog}>
+            <Text style={styles.howToPlayTitle}>How To Play</Text>
+
+            <View style={styles.howToPlayContent}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🎯</Text>
+                <Text style={styles.sectionTitle}>Objective:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                Eat numbers in sequence (1→2→3...→9→1)
+              </Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🎮</Text>
+                <Text style={styles.sectionTitle}>Controls:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                • Swipe or tap to change direction
+              </Text>
+              <Text style={styles.sectionText}>
+                • Avoid walls and obstacles
+              </Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🔢</Text>
+                <Text style={styles.sectionTitle}>Numbers:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                • Yellow: Target number to eat
+              </Text>
+              <Text style={styles.sectionText}>• Gray: Other numbers</Text>
+              <Text style={styles.sectionText}>• Red: Poisonous (avoid!)</Text>
+              <Text style={styles.sectionText}>• Blinking: Time-limited</Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>⭐</Text>
+                <Text style={styles.sectionTitle}>Bonuses:</Text>
+              </View>
+              <Text style={styles.sectionText}>• ⭐ Score multiplier</Text>
+              <Text style={styles.sectionText}>• ❄️ Time freeze</Text>
+              <Text style={styles.sectionText}>• ✂️ Shrink snake</Text>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionIcon}>🏆</Text>
+                <Text style={styles.sectionTitle}>Scoring:</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                • Eat correct numbers for points
+              </Text>
+              <Text style={styles.sectionText}>
+                • Build streaks for bonus multipliers
+              </Text>
+              <Text style={styles.sectionText}>
+                • Unlock achievements and skins
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.gotItButton}
+              onPress={() => setShowHowToPlay(false)}
+            >
+              <Text style={styles.gotItButtonText}>Got It!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -208,5 +258,73 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#4ade80",
     letterSpacing: 8,
+  },
+  dialogOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  howToPlayDialog: {
+    backgroundColor: "#1f2937",
+    borderRadius: 15,
+    padding: 20,
+    borderWidth: 3,
+    borderColor: "#22c55e",
+    maxWidth: 350,
+    maxHeight: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 15,
+  },
+  howToPlayTitle: {
+    color: "#22c55e",
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  howToPlayContent: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  sectionIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  sectionTitle: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  sectionText: {
+    color: "#e5e7eb",
+    fontSize: 14,
+    marginBottom: 3,
+    marginLeft: 24,
+  },
+  gotItButton: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    alignSelf: "center",
+  },
+  gotItButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });

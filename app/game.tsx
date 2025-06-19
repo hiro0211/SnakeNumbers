@@ -376,6 +376,7 @@ export default function GameScreen() {
     null
   );
   const [level, setLevel] = useState(1);
+  const [completedCycles, setCompletedCycles] = useState(0); // 1-9サイクル完了数
 
   // アニメーション
   const achievementOpacity = useRef(new Animated.Value(0)).current;
@@ -399,9 +400,9 @@ export default function GameScreen() {
     [currentSkinId]
   );
 
-  // レベル計算
-  const calculateLevel = useCallback((score: number) => {
-    return Math.floor(score / 500) + 1; // 500点ごとにレベルアップ
+  // レベル計算（1-9サイクルベース）
+  const calculateLevel = useCallback((cycles: number) => {
+    return cycles + 1; // サイクル完了数 + 1がレベル
   }, []);
 
   // グリッドの高速検索用マップ
@@ -504,7 +505,17 @@ export default function GameScreen() {
         setGameStats(stats);
         setHighScore(stats.highScore);
         setBestStreak(stats.bestStreak);
-        setLevel(calculateLevel(stats.highScore)); // ハイスコアからレベルを計算
+        // ハイスコアからサイクル数を推定（1サイクル = 約450点）
+        const estimatedCycles = Math.floor(stats.highScore / 450);
+        setCompletedCycles(estimatedCycles);
+        setLevel(calculateLevel(estimatedCycles));
+      }
+
+      // 個別のハイスコアも確認（フォールバック）
+      const highScoreData = await AsyncStorage.getItem("numberSnakeHighScore");
+      if (highScoreData) {
+        const savedHighScore = parseInt(highScoreData);
+        setHighScore((prevScore) => Math.max(prevScore, savedHighScore));
       }
 
       const achievementsData = await AsyncStorage.getItem(
@@ -544,6 +555,10 @@ export default function GameScreen() {
           JSON.stringify(newStats)
         );
         await AsyncStorage.setItem(
+          "numberSnakeHighScore",
+          newStats.highScore.toString()
+        );
+        await AsyncStorage.setItem(
           "numberSnakeAchievements",
           JSON.stringify(newAchievements.filter((a) => a.unlocked))
         );
@@ -564,6 +579,8 @@ export default function GameScreen() {
     setScore(0);
     setSpeed(200);
     setObstacles([]);
+    setLevel(1);
+    setCompletedCycles(0);
     generateNumbers(initialSnake);
     setBonusItems([]);
     setScoreMultiplier(1);
@@ -666,6 +683,8 @@ export default function GameScreen() {
           case "SHRINK":
             // 蛇の長さを半分にする（最低1）
             setSnake((s) => s.slice(0, Math.max(1, Math.ceil(s.length / 2))));
+            // ストリークも半分にする
+            setCurrentStreak((prevStreak) => Math.floor(prevStreak / 2));
             break;
         }
       }
@@ -697,9 +716,18 @@ export default function GameScreen() {
             scoreRef.current + eatenNumber.value * 10 * totalMultiplier;
           setScore(newScore);
 
-          // レベル更新と難易度調整
-          const newLevel = calculateLevel(newScore);
-          if (newLevel > level) {
+          const currentEatenNumberValue = nextNumberRef.current; // 今食べた数字の値
+          const targetNextNumberValue =
+            currentEatenNumberValue === 9 ? 1 : currentEatenNumberValue + 1;
+          setNextNumber(targetNextNumberValue); // 次の数字をセット (useEffectでnextNumberRef.currentも更新される)
+
+          // 1-9サイクル完了チェック（9を食べて次が1に戻る時）
+          if (currentEatenNumberValue === 9) {
+            const newCycles = completedCycles + 1;
+            setCompletedCycles(newCycles);
+
+            // レベル更新と難易度調整
+            const newLevel = calculateLevel(newCycles);
             setLevel(newLevel);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
@@ -709,17 +737,17 @@ export default function GameScreen() {
               ...numbersRef.current.map((n) => n.position),
               ...bonusItemsRef.current.map((b) => b.position),
             ]);
+
+            // スピードアップ（各レベルアップごと）
+            if (speed > 80) {
+              setSpeed((prev) => Math.max(prev - 15, 80));
+            }
           }
 
           // ベストストリーク更新
           if (newStreak > bestStreak) {
             setBestStreak(newStreak);
           }
-
-          const currentEatenNumberValue = nextNumberRef.current; // 今食べた数字の値
-          const targetNextNumberValue =
-            currentEatenNumberValue === 9 ? 1 : currentEatenNumberValue + 1;
-          setNextNumber(targetNextNumberValue); // 次の数字をセット (useEffectでnextNumberRef.currentも更新される)
 
           // スコア倍率処理
           if (multiplierDuration > 0) {
@@ -754,8 +782,8 @@ export default function GameScreen() {
           } else {
             // 次に取るべき数字が既に盤面にある場合、ランダムな数字を追加して盤面のアイテム数を維持
             const newNumberValue = Math.floor(Math.random() * 9) + 1;
-            const isTimeLimited = newLevel >= 8 && Math.random() < 0.2; // 20%の確率
-            const isPoisonous = newLevel >= 15 && Math.random() < 0.05; // 5%の確率
+            const isTimeLimited = newLevel >= 5 && Math.random() < 0.25; // レベル5から25%の確率
+            const isPoisonous = newLevel >= 8 && Math.random() < 0.1; // レベル8から10%の確率
 
             updatedNumbersList.push({
               position: getRandomEmptyPosition([
@@ -780,11 +808,6 @@ export default function GameScreen() {
             ...obstaclesRef.current.map((o) => o.position),
           ]);
 
-          // スピードアップ（500点ごと）
-          if (newScore % 500 === 0 && speed > 50) {
-            setSpeed((prev) => Math.max(prev - 20, 50));
-          }
-
           // 蛇が伸びるので尻尾は削除しない
         } else {
           // 間違った数字を食べた
@@ -806,6 +829,7 @@ export default function GameScreen() {
     currentStreak,
     bestStreak,
     level,
+    completedCycles,
     calculateLevel,
     generateObstacles,
   ]);
@@ -1098,7 +1122,7 @@ export default function GameScreen() {
 
   // 時間制限数字の更新
   useEffect(() => {
-    if (level >= 8 && gameState === "playing") {
+    if (level >= 5 && gameState === "playing") {
       timeUpdateRef.current = setInterval(() => {
         setNumbers(
           (currentNumbers) =>
@@ -1131,7 +1155,7 @@ export default function GameScreen() {
 
   // 移動障害物の更新
   useEffect(() => {
-    if (level >= 20 && gameState === "playing") {
+    if (level >= 8 && gameState === "playing") {
       const moveObstaclesInterval = setInterval(() => {
         setObstacles((currentObstacles) =>
           currentObstacles.map((obstacle) => {
@@ -1186,9 +1210,10 @@ export default function GameScreen() {
 
   const generateObstacles = useCallback(
     (level: number, occupiedPositions: Position[]) => {
-      if (level < 3) return;
+      if (level < 2) return; // レベル2から障害物開始
 
-      const obstacleCount = Math.min(Math.floor((level - 1) / 2), 8); // 最大8個
+      // レベルに応じて障害物の数を決定（より早く増加）
+      const obstacleCount = Math.min(level - 1, 12); // 最大12個まで
       const newObstacles: Obstacle[] = [];
       const occupied = new Set(
         occupiedPositions.map((pos) => `${pos.x},${pos.y}`)
@@ -1214,7 +1239,7 @@ export default function GameScreen() {
         );
 
         if (attempts < 100) {
-          const isMoving = level >= 20 && Math.random() < 0.3; // 30%の確率で移動
+          const isMoving = level >= 8 && Math.random() < 0.4; // レベル8から移動開始、確率40%
           const directions: Direction[] = ["UP", "DOWN", "LEFT", "RIGHT"];
 
           newObstacles.push({
