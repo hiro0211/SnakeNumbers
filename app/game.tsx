@@ -782,8 +782,8 @@ export default function GameScreen() {
           } else {
             // 次に取るべき数字が既に盤面にある場合、ランダムな数字を追加して盤面のアイテム数を維持
             const newNumberValue = Math.floor(Math.random() * 9) + 1;
-            const isTimeLimited = newLevel >= 5 && Math.random() < 0.25; // レベル5から25%の確率
-            const isPoisonous = newLevel >= 8 && Math.random() < 0.1; // レベル8から10%の確率
+            const isTimeLimited = level >= 5 && Math.random() < 0.25; // レベル5から25%の確率
+            const isPoisonous = level >= 8 && Math.random() < 0.1; // レベル8から10%の確率
 
             updatedNumbersList.push({
               position: getRandomEmptyPosition([
