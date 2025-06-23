@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  memo,
 } from "react";
 import {
   Dimensions,
@@ -21,8 +22,9 @@ import {
   ViewStyle,
   Animated,
 } from "react-native";
-// import AdBanner from "@/components/AdBanner";
-// import useInterstitialAd from "@/hooks/useInterstitialAd";
+import AdBanner from "@/components/AdBanner";
+import useInterstitialAd from "@/hooks/useInterstitialAd";
+import useRewardedAd from "@/hooks/useRewardedAd";
 
 const { width, height } = Dimensions.get("window");
 const GRID_SIZE = 16;
@@ -223,8 +225,8 @@ const ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
-// メモ化されたセルコンポーネント
-const GameCell = React.memo(
+// 高度にメモ化されたセルコンポーネント
+const GameCell = memo(
   ({
     cellInfo,
     cellStyle,
@@ -238,106 +240,136 @@ const GameCell = React.memo(
     y: number;
     snakeSkin: SnakeSkin;
   }) => {
-    let content = null;
-    let style = [styles.cell];
+    const memoizedStyle = useMemo(() => {
+      let style = [styles.cell];
 
-    switch (cellInfo.type) {
-      case "snakeHead":
-        style = [styles.cell, { backgroundColor: snakeSkin.bodyColor }];
-        content = (
-          <Text style={styles.snakeHeadText}>{snakeSkin.headEmoji}</Text>
-        );
-        break;
-      case "snakeBody":
-        style = [styles.cell, { backgroundColor: snakeSkin.bodyColor }];
-        break;
-      case "targetNumber":
-        style = [
-          styles.cell,
-          {
-            backgroundColor: "#fbbf24",
-            borderWidth: 2,
-            borderColor: "#f59e0b",
-          },
-        ];
-        content = <Text style={styles.numberText}>{cellInfo.value}</Text>;
-        break;
-      case "timeLimitedNumber":
-        const isBlinking = cellInfo.timeLeft && cellInfo.timeLeft <= 3;
-        style = [
-          styles.cell,
-          {
-            backgroundColor: cellInfo.isTarget
-              ? isBlinking
-                ? "#dc2626"
-                : "#fbbf24"
-              : isBlinking
-              ? "#7f1d1d"
-              : "#374151",
-            borderWidth: cellInfo.isTarget ? 2 : 1,
-            borderColor: cellInfo.isTarget
-              ? isBlinking
-                ? "#ef4444"
-                : "#f59e0b"
-              : "#6b7280",
-          },
-        ];
-        content = <Text style={styles.numberText}>{cellInfo.value}</Text>;
-        break;
-      case "poisonousNumber":
-        style = [
-          styles.cell,
-          {
-            backgroundColor: "#dc2626",
-            borderWidth: 2,
-            borderColor: "#ef4444",
-          },
-        ];
-        content = <Text style={styles.poisonText}>💀</Text>;
-        break;
-      case "number":
-        style = [
-          styles.cell,
-          {
-            backgroundColor: "#374151",
-            borderWidth: 1,
-            borderColor: "#6b7280",
-          },
-        ];
-        content = <Text style={styles.numberText}>{cellInfo.value}</Text>;
-        break;
-      case "bonus":
-        let bonusContent = null;
-        switch (cellInfo.bonusType) {
-          case "SCORE_MULTIPLIER":
-            bonusContent = "⭐";
-            break;
-          case "TIME_FREEZE":
-            bonusContent = "❄️";
-            break;
-          case "SHRINK":
-            bonusContent = "✂️";
-            break;
-        }
-        style = [styles.cell, { backgroundColor: "#ff69b4" }];
-        content = <Text style={styles.bonusText}>{bonusContent}</Text>;
-        break;
-      case "obstacle":
-        style = [
-          styles.cell,
-          {
-            backgroundColor: "#4b5563",
-            borderColor: "#6b7280",
-            borderWidth: 2,
-          },
-        ];
-        content = <Text style={styles.obstacleText}>🧱</Text>;
-        break;
-      default:
-        style = [styles.cell];
-    }
+      switch (cellInfo.type) {
+        case "snakeHead":
+          return [styles.cell, { backgroundColor: snakeSkin.bodyColor }];
+        case "snakeBody":
+          return [styles.cell, { backgroundColor: snakeSkin.bodyColor }];
+        case "targetNumber":
+          return [
+            styles.cell,
+            {
+              backgroundColor: "#fbbf24",
+              borderWidth: 2,
+              borderColor: "#f59e0b",
+            },
+          ];
+        case "timeLimitedNumber":
+          const isBlinking = cellInfo.timeLeft && cellInfo.timeLeft <= 3;
+          return [
+            styles.cell,
+            {
+              backgroundColor: cellInfo.isTarget
+                ? isBlinking
+                  ? "#dc2626"
+                  : "#fbbf24"
+                : isBlinking
+                ? "#7f1d1d"
+                : "#374151",
+              borderWidth: cellInfo.isTarget ? 2 : 1,
+              borderColor: cellInfo.isTarget
+                ? isBlinking
+                  ? "#ef4444"
+                  : "#f59e0b"
+                : "#6b7280",
+            },
+          ];
+        case "poisonousNumber":
+          return [
+            styles.cell,
+            {
+              backgroundColor: "#dc2626",
+              borderWidth: 2,
+              borderColor: "#ef4444",
+            },
+          ];
+        case "number":
+          return [
+            styles.cell,
+            {
+              backgroundColor: "#374151",
+              borderWidth: 1,
+              borderColor: "#6b7280",
+            },
+          ];
+        case "bonus":
+          return [styles.cell, { backgroundColor: "#ff69b4" }];
+        case "obstacle":
+          return [
+            styles.cell,
+            {
+              backgroundColor: "#4b5563",
+              borderColor: "#6b7280",
+              borderWidth: 2,
+            },
+          ];
+        default:
+          return [styles.cell];
+      }
+    }, [
+      cellInfo.type,
+      cellInfo.isTarget,
+      cellInfo.timeLeft,
+      snakeSkin.bodyColor,
+    ]);
 
-    return <View style={style as StyleProp<ViewStyle>}>{content}</View>;
+    const memoizedContent = useMemo(() => {
+      switch (cellInfo.type) {
+        case "snakeHead":
+          return (
+            <Text style={styles.snakeHeadText}>{snakeSkin.headEmoji}</Text>
+          );
+        case "snakeBody":
+          return null;
+        case "targetNumber":
+        case "timeLimitedNumber":
+        case "number":
+          return <Text style={styles.numberText}>{cellInfo.value}</Text>;
+        case "poisonousNumber":
+          return <Text style={styles.poisonText}>💀</Text>;
+        case "bonus":
+          switch (cellInfo.bonusType) {
+            case "SCORE_MULTIPLIER":
+              return <Text style={styles.bonusText}>⭐</Text>;
+            case "TIME_FREEZE":
+              return <Text style={styles.bonusText}>❄️</Text>;
+            case "SHRINK":
+              return <Text style={styles.bonusText}>✂️</Text>;
+            default:
+              return null;
+          }
+        case "obstacle":
+          return <Text style={styles.obstacleText}>🧱</Text>;
+        default:
+          return null;
+      }
+    }, [
+      cellInfo.type,
+      cellInfo.value,
+      cellInfo.bonusType,
+      snakeSkin.headEmoji,
+    ]);
+
+    return (
+      <View style={memoizedStyle as StyleProp<ViewStyle>}>
+        {memoizedContent}
+      </View>
+    );
+  },
+  (prevProps, nextProps) => {
+    // カスタム比較関数で不要な再レンダリングを防ぐ
+    return (
+      prevProps.cellInfo.type === nextProps.cellInfo.type &&
+      prevProps.cellInfo.value === nextProps.cellInfo.value &&
+      prevProps.cellInfo.isTarget === nextProps.cellInfo.isTarget &&
+      prevProps.cellInfo.bonusType === nextProps.cellInfo.bonusType &&
+      prevProps.cellInfo.timeLeft === nextProps.cellInfo.timeLeft &&
+      prevProps.cellInfo.isPoisonous === nextProps.cellInfo.isPoisonous &&
+      prevProps.snakeSkin.id === nextProps.snakeSkin.id
+    );
   }
 );
 
@@ -350,7 +382,7 @@ export default function GameScreen() {
   const [nextNumber, setNextNumber] = useState(1);
   const [score, setScore] = useState(0);
   const [gameState, setGameState] = useState<GameState>("playing");
-  const [speed, setSpeed] = useState(200);
+  const [speed, setSpeed] = useState(200); // より滑らかな初期速度
   const [highScore, setHighScore] = useState(0);
   const [bonusItems, setBonusItems] = useState<BonusItem[]>([]);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
@@ -377,11 +409,19 @@ export default function GameScreen() {
   );
   const [level, setLevel] = useState(1);
   const [completedCycles, setCompletedCycles] = useState(0); // 1-9サイクル完了数
+  const [continued, setContinued] = useState(false); // コンティニュー使用フラグ
+
+  // 広告フック
+  const { showAd: showInterstitialAd, isAdLoaded: isInterstitialAdLoaded } =
+    useInterstitialAd();
+  const { showAd: showRewardedAd, isAdLoaded: isRewardedAdLoaded } =
+    useRewardedAd();
 
   // アニメーション
   const achievementOpacity = useRef(new Animated.Value(0)).current;
 
-  const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
+  const gameLoopRef = useRef<number | null>(null);
+  const lastMoveTime = useRef(0);
   const directionRef = useRef<Direction>("RIGHT");
   const timeUpdateRef = useRef<NodeJS.Timeout | null>(null);
   const gameOverHandled = useRef(false);
@@ -392,6 +432,37 @@ export default function GameScreen() {
   const obstaclesRef = useRef<Obstacle[]>([]);
   const nextNumberRef = useRef(1);
   const scoreRef = useRef(0);
+
+  // コンティニュー処理
+  function handleContinue() {
+    // ゲームオーバーフラグをリセット
+    gameOverHandled.current = false;
+
+    // 蛇を少し短くして再開（スコアとnextNumberは保持）
+    const shortenedSnake = snake.slice(0, Math.max(1, snake.length - 3));
+    setSnake(shortenedSnake);
+
+    // refの値を更新
+    nextNumberRef.current = nextNumber;
+    scoreRef.current = score;
+
+    // ゲームを再開するための追加設定
+    setIsFrozen(false);
+    setScoreMultiplier(1);
+    setMultiplierDuration(0);
+    setContinued(true); // コンティニュー使用済み
+
+    // 現在のレベルに基づいてスピードを調整
+    const currentLevel = Math.floor(score / 450) + 1;
+    const adjustedSpeed = Math.max(150 - (currentLevel - 1) * 10, 60);
+    setSpeed(adjustedSpeed);
+
+    // 新しい数字を生成（現在の蛇の位置を考慮）
+    generateNumbers(shortenedSnake);
+
+    // ゲーム状態を最後に設定
+    setGameState("playing");
+  }
 
   // 現在のスキンを取得
   const currentSkin = useMemo(
@@ -405,18 +476,14 @@ export default function GameScreen() {
     return cycles + 1; // サイクル完了数 + 1がレベル
   }, []);
 
-  // グリッドの高速検索用マップ
+  // 高度に最適化されたグリッドマップ
   const gridMap = useMemo(() => {
     const map: { [key: string]: CellInfo } = {};
 
-    // すべてのセルを空として初期化
-    for (let x = 0; x < GRID_SIZE; x++) {
-      for (let y = 0; y < GRID_SIZE; y++) {
-        map[`${x},${y}`] = { type: "empty" };
-      }
-    }
+    // まず基本の空セルを設定（遅延初期化）
+    const emptyCell: CellInfo = { type: "empty" };
 
-    // スネークの位置を設定
+    // スネークの位置を設定（最も重要なので最初に処理）
     snake.forEach((segment, index) => {
       const key = `${segment.x},${segment.y}`;
       map[key] = {
@@ -424,23 +491,26 @@ export default function GameScreen() {
       };
     });
 
-    // 数字の位置を設定
+    // 数字の位置を設定（計算を最小化）
     numbers.forEach((numberItem) => {
       const key = `${numberItem.position.x},${numberItem.position.y}`;
-      let cellType: CellType = "number";
+      const isTarget = numberItem.value === nextNumber;
 
+      let cellType: CellType;
       if (numberItem.isPoisonous) {
         cellType = "poisonousNumber";
       } else if (numberItem.isTimeLimited) {
         cellType = "timeLimitedNumber";
-      } else if (numberItem.value === nextNumber) {
+      } else if (isTarget) {
         cellType = "targetNumber";
+      } else {
+        cellType = "number";
       }
 
       map[key] = {
         type: cellType,
         value: numberItem.value,
-        isTarget: numberItem.value === nextNumber,
+        isTarget,
         timeLeft: numberItem.timeLeft,
         isPoisonous: numberItem.isPoisonous,
       };
@@ -463,11 +533,12 @@ export default function GameScreen() {
       };
     });
 
+    // 空のセルを遅延で追加（存在しない場合のみ）
+    const getCell = (key: string): CellInfo => map[key] || emptyCell;
+    map.getCell = getCell;
+
     return map;
   }, [snake, numbers, nextNumber, bonusItems, obstacles]);
-
-  // インタースティシャル広告hook（一時的に無効化）
-  // const { showAd: showInterstitialAd } = useInterstitialAd();
 
   // refを更新
   useEffect(() => {
@@ -576,12 +647,13 @@ export default function GameScreen() {
     setDirection("RIGHT");
     directionRef.current = "RIGHT";
     setNextNumber(1);
+    nextNumberRef.current = 1; // refを直接設定
     setScore(0);
+    scoreRef.current = 0; // refを直接設定
     setSpeed(200);
     setObstacles([]);
     setLevel(1);
     setCompletedCycles(0);
-    generateNumbers(initialSnake);
     setBonusItems([]);
     setScoreMultiplier(1);
     setMultiplierDuration(0);
@@ -589,6 +661,12 @@ export default function GameScreen() {
     setCurrentStreak(0);
     setComboMultiplier(1);
     gameOverHandled.current = false; // ゲーム開始時にフラグをリセット
+    setContinued(false); // コンティニューフラグもリセット
+
+    // refが確実に設定された後に数字を生成
+    setTimeout(() => {
+      generateNumbers(initialSnake);
+    }, 50);
   }, []);
 
   // ハイスコア読み込み
@@ -738,9 +816,9 @@ export default function GameScreen() {
               ...bonusItemsRef.current.map((b) => b.position),
             ]);
 
-            // スピードアップ（各レベルアップごと）
-            if (speed > 80) {
-              setSpeed((prev) => Math.max(prev - 15, 80));
+            // より滑らかなスピードアップ（各レベルアップごと）
+            if (speed > 60) {
+              setSpeed((prev) => Math.max(prev - 10, 60)); // 10msずつ減少、最低60ms
             }
           }
 
@@ -834,25 +912,39 @@ export default function GameScreen() {
     generateObstacles,
   ]);
 
-  // ゲームループ
+  // requestAnimationFrameを使った滑らかなゲームループ
+  const gameLoop = useCallback(
+    (currentTime: number) => {
+      if (gameState === "playing" && !isFrozen) {
+        if (currentTime - lastMoveTime.current >= speed) {
+          moveSnake();
+          lastMoveTime.current = currentTime;
+        }
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
+      }
+    },
+    [gameState, speed, moveSnake, isFrozen]
+  );
+
+  // ゲームループ制御
   useEffect(() => {
     if (gameState === "playing" && !isFrozen) {
-      gameLoopRef.current = setInterval(
-        moveSnake,
-        speed
-      ) as unknown as NodeJS.Timeout;
+      lastMoveTime.current = 0;
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
     } else {
       if (gameLoopRef.current) {
-        clearInterval(gameLoopRef.current as unknown as number);
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = null;
       }
     }
 
     return () => {
       if (gameLoopRef.current) {
-        clearInterval(gameLoopRef.current as unknown as number);
+        cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = null;
       }
     };
-  }, [gameState, speed, moveSnake, isFrozen]);
+  }, [gameLoop]);
 
   const generateNumbers = useCallback(
     (currentSnake: Position[]) => {
@@ -866,7 +958,7 @@ export default function GameScreen() {
         occupiedPositions.add(`${obstacle.position.x},${obstacle.position.y}`);
       });
 
-      // 最初の数字として必ず1を含める
+      // 現在の目標数字を必ず含める（失敗した場合は強制的に生成）
       let position: Position;
       let attempts = 0;
 
@@ -881,12 +973,29 @@ export default function GameScreen() {
         attempts < 100
       );
 
-      if (attempts < 100) {
-        newNumbers.push({
-          position,
-          value: 1,
-        });
+      // 100回試行しても失敗した場合は、空いている最初の位置を使用
+      if (attempts >= 100) {
+        for (let y = 0; y < GRID_SIZE; y++) {
+          for (let x = 0; x < GRID_SIZE; x++) {
+            if (!occupiedPositions.has(`${x},${y}`)) {
+              position = { x, y };
+              break;
+            }
+          }
+          if (position) break;
+        }
       }
+
+      // 目標数字を必ず追加
+      newNumbers.push({
+        position,
+        value: nextNumberRef.current,
+      });
+
+      console.log(
+        `Generated target number ${nextNumberRef.current} at position (${position.x}, ${position.y})`
+      );
+      occupiedPositions.add(`${position.x},${position.y}`);
 
       // 残りの2-4個の数字を生成
       const numCount = Math.floor(Math.random() * 3) + 2;
@@ -972,6 +1081,13 @@ export default function GameScreen() {
   useEffect(() => {
     if (gameState === "gameOver" && !gameOverHandled.current) {
       gameOverHandled.current = true;
+      // 広告表示（インタースティシャル or リワード）
+      // コンティニュー未使用かつリワード広告が読み込み済みの場合
+      if (!continued && isRewardedAdLoaded) {
+        // 何もしない（ユーザーの選択を待つ）
+      } else if (isInterstitialAdLoaded) {
+        showInterstitialAd();
+      }
 
       const handleGameOver = async () => {
         const finalScore = score;
@@ -1038,6 +1154,10 @@ export default function GameScreen() {
     saveGameData,
     bestStreak,
     achievementOpacity,
+    continued,
+    isInterstitialAdLoaded,
+    isRewardedAdLoaded,
+    showInterstitialAd,
   ]);
 
   // スワイプ操作
@@ -1081,26 +1201,40 @@ export default function GameScreen() {
     setGameState((prev) => (prev === "playing" ? "paused" : "playing"));
   }, []);
 
-  // 最適化されたグリッドレンダリング
+  // ゲーム状態チェックの最適化
+  const isPlaying = gameState === "playing";
+  const isPaused = gameState === "paused";
+  const isGameOver = gameState === "gameOver";
+
+  // 高度に最適化されたグリッドレンダリング（FlatList風のアプローチ）
   const renderGrid = useMemo(() => {
     const grid = [];
+    const emptyCell: CellInfo = { type: "empty" };
+
     for (let y = 0; y < GRID_SIZE; y++) {
       const row = [];
       for (let x = 0; x < GRID_SIZE; x++) {
         const key = `${x},${y}`;
-        const cellInfo = gridMap[key] || { type: "empty" };
+        const cellInfo = gridMap[key] || emptyCell;
 
-        row.push(
-          <GameCell
-            key={key}
-            cellInfo={cellInfo}
-            cellStyle={styles.cell}
-            x={x}
-            y={y}
-            snakeSkin={currentSkin}
-          />
-        );
+        // 空のセルは軽量化
+        if (cellInfo.type === "empty") {
+          row.push(<View key={key} style={styles.cell} />);
+        } else {
+          row.push(
+            <GameCell
+              key={key}
+              cellInfo={cellInfo}
+              cellStyle={styles.cell}
+              x={x}
+              y={y}
+              snakeSkin={currentSkin}
+            />
+          );
+        }
       }
+
+      // 各行をメモ化
       grid.push(
         <View key={y} style={styles.row}>
           {row}
@@ -1343,8 +1477,8 @@ export default function GameScreen() {
         ))}
       </View>
 
-      {/* バナー広告（一時的に無効化） */}
-      {/* <AdBanner /> */}
+      {/* バナー広告 */}
+      <AdBanner />
 
       {/* Game Grid */}
       <View style={styles.gameContainer} {...panResponder.panHandlers}>
@@ -1430,11 +1564,47 @@ export default function GameScreen() {
             <Text style={styles.currentScoreText}>Score: {score}</Text>
             <Text style={styles.highScoreText}>High Score: {highScore}</Text>
             <View style={styles.dialogButtons}>
+              {!continued && (
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    !isRewardedAdLoaded && styles.disabledButton,
+                  ]}
+                  onPress={async () => {
+                    try {
+                      console.log(
+                        "Continue button pressed - showing rewarded ad"
+                      );
+                      const result = await showRewardedAd();
+                      console.log("Rewarded ad result:", result);
+                      if (result) {
+                        // 広告視聴成功時のみコンティニュー
+                        console.log(
+                          "Ad watched successfully - continuing game"
+                        );
+                        handleContinue();
+                      } else {
+                        // 広告視聴失敗時はゲームオーバー画面を維持
+                        console.log(
+                          "Rewarded ad was not completed - staying on game over screen"
+                        );
+                      }
+                    } catch (error) {
+                      console.error("Error showing rewarded ad:", error);
+                    }
+                  }}
+                  disabled={!isRewardedAdLoaded}
+                >
+                  <Text style={styles.retryButtonText}>Continue (Ad)</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={() => {
-                  setGameState("playing");
+                  setContinued(false); // コンティニューフラグをリセット
                   initializeGame();
+                  // ゲーム状態は初期化後に設定
+                  setTimeout(() => setGameState("playing"), 100);
                 }}
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
@@ -1858,6 +2028,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
+  },
+  continueButton: {
+    backgroundColor: "#3b82f6",
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  disabledButton: {
+    backgroundColor: "#4b5563",
   },
   retryButtonText: {
     color: "#ffffff",

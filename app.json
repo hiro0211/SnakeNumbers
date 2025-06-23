@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Snake Numbers",
+    "name": "SnakeNumbers",
     "slug": "SnakeNumbers",
     "version": "1.0.1",
     "orientation": "portrait",
@@ -33,7 +33,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/SnakeNumbersIcon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -52,7 +52,8 @@
           "androidAppId": "ca-app-pub-6259770208793369~6003764971",
           "iosAppId": "ca-app-pub-6259770208793369~6003764971"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -61,8 +62,8 @@
       "router": {},
       "eas": {
         "projectId": "5a659d0b-c3c9-4209-ba66-bf7d687d9151"
-      }
-    },
-    "owner": "hiro01150"
+      },
+      "owner": "hiro01150"
+    }
   }
 }

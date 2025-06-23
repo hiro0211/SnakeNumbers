@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import AdBanner from "@/components/AdBanner";
+import AdBanner from "@/components/AdBanner";
 
 const { width, height } = Dimensions.get("window");
 
@@ -78,13 +78,13 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* バナー広告（一時的に無効化） */}
-      {/* <AdBanner /> */}
-
       {/* Decoration */}
       <View style={styles.decoration}>
         <Text style={styles.decorationText}>1 2 3 4 5 6 7 8 9</Text>
       </View>
+
+      {/* バナー広告 */}
+      <AdBanner />
 
       {/* How To Play Dialog */}
       {showHowToPlay && (
