@@ -452,10 +452,9 @@ export default function GameScreen() {
     setMultiplierDuration(0);
     setContinued(true); // コンティニュー使用済み
 
-    // 現在のレベルに基づいてスピードを調整
-    const currentLevel = Math.floor(score / 450) + 1;
-    const adjustedSpeed = Math.max(150 - (currentLevel - 1) * 10, 60);
-    setSpeed(adjustedSpeed);
+    // コンティニュー時は現在のスピードを維持（急激な変化を避ける）
+    console.log(`Continue: maintaining current speed of ${speed}ms`);
+    // スピードは変更せずに現在の値を維持
 
     // 新しい数字を生成（現在の蛇の位置を考慮）
     generateNumbers(shortenedSnake);
@@ -794,6 +793,11 @@ export default function GameScreen() {
             scoreRef.current + eatenNumber.value * 10 * totalMultiplier;
           setScore(newScore);
 
+          // デバッグ用ログ（数字を食べた時のスピード確認）
+          console.log(
+            `Ate number ${eatenNumber.value}, current speed: ${speed}ms`
+          );
+
           const currentEatenNumberValue = nextNumberRef.current; // 今食べた数字の値
           const targetNextNumberValue =
             currentEatenNumberValue === 9 ? 1 : currentEatenNumberValue + 1;
@@ -809,17 +813,21 @@ export default function GameScreen() {
             setLevel(newLevel);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-            // 新しいレベルで障害物を生成
-            generateObstacles(newLevel, [
-              ...newSnake,
-              ...numbersRef.current.map((n) => n.position),
-              ...bonusItemsRef.current.map((b) => b.position),
-            ]);
+            // 新しいレベルで障害物を生成（3秒後に実行）
+            setTimeout(() => {
+              // 障害物生成は後でuseEffectで処理
+            }, 3000);
 
-            // より滑らかなスピードアップ（各レベルアップごと）
-            if (speed > 60) {
-              setSpeed((prev) => Math.max(prev - 10, 60)); // 10msずつ減少、最低60ms
-            }
+            // 5秒後にスピードアップ（各レベルアップごと）
+            setTimeout(() => {
+              setSpeed((prevSpeed) => {
+                const newSpeed = Math.max(prevSpeed - 10, 60); // 10msずつ減少、最低60ms
+                console.log(
+                  `Level up speed change: ${prevSpeed} -> ${newSpeed}`
+                );
+                return newSpeed;
+              });
+            }, 5000); // 5秒遅延（より長い猶予）
           }
 
           // ベストストリーク更新
@@ -909,7 +917,6 @@ export default function GameScreen() {
     level,
     completedCycles,
     calculateLevel,
-    generateObstacles,
   ]);
 
   // requestAnimationFrameを使った滑らかなゲームループ
@@ -1085,7 +1092,8 @@ export default function GameScreen() {
       // コンティニュー未使用かつリワード広告が読み込み済みの場合
       if (!continued && isRewardedAdLoaded) {
         // 何もしない（ユーザーの選択を待つ）
-      } else if (isInterstitialAdLoaded) {
+      } else if (!continued && isInterstitialAdLoaded) {
+        // コンティニュー未使用の場合のみインタースティシャル広告を表示
         showInterstitialAd();
       }
 
@@ -1341,6 +1349,64 @@ export default function GameScreen() {
       return () => clearInterval(moveObstaclesInterval);
     }
   }, [level, gameState]);
+
+  // レベル変更時の障害物生成
+  useEffect(() => {
+    if (level > 1 && gameState === "playing") {
+      // 少し遅延させて障害物を生成（レベルアップから3秒後）
+      const generateObstaclesTimeout = setTimeout(() => {
+        const occupiedPositions = [
+          ...snake,
+          ...numbers.map((n) => n.position),
+          ...bonusItems.map((b) => b.position),
+        ];
+
+        const obstacleCount = Math.min(level - 1, 12); // 最大12個まで
+        const newObstacles: Obstacle[] = [];
+        const occupied = new Set(
+          occupiedPositions.map((pos) => `${pos.x},${pos.y}`)
+        );
+
+        for (let i = 0; i < obstacleCount; i++) {
+          let position: Position;
+          let attempts = 0;
+
+          do {
+            position = {
+              x: Math.floor(Math.random() * GRID_SIZE),
+              y: Math.floor(Math.random() * GRID_SIZE),
+            };
+            attempts++;
+          } while (
+            (occupied.has(`${position.x},${position.y}`) ||
+              newObstacles.some(
+                (obs) =>
+                  obs.position.x === position.x && obs.position.y === position.y
+              )) &&
+            attempts < 100
+          );
+
+          if (attempts < 100) {
+            const isMoving = level >= 8 && Math.random() < 0.4; // レベル8から移動開始、確率40%
+            const directions: Direction[] = ["UP", "DOWN", "LEFT", "RIGHT"];
+
+            newObstacles.push({
+              position,
+              isMoving,
+              direction: isMoving
+                ? directions[Math.floor(Math.random() * directions.length)]
+                : undefined,
+            });
+            occupied.add(`${position.x},${position.y}`);
+          }
+        }
+
+        setObstacles(newObstacles);
+      }, 3000); // 3秒後に障害物を生成
+
+      return () => clearTimeout(generateObstaclesTimeout);
+    }
+  }, [level, gameState, snake, numbers, bonusItems]);
 
   const generateObstacles = useCallback(
     (level: number, occupiedPositions: Position[]) => {
