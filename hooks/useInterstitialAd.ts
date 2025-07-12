@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { InterstitialAd, AdEventType } from "react-native-google-mobile-ads";
 
-// Google公式のテスト広告ユニットID
-const adUnitId = __DEV__
-  ? "ca-app-pub-3940256099942544/4411468910" // Googleのテスト用インタースティシャル
-  : process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID!;
+// .envファイルから本番用の広告ユニットIDを読み込む
+const adUnitId = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID!;
 
 export default function useInterstitialAd() {
   const [isAdLoaded, setIsAdLoaded] = useState(false);

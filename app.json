@@ -2,7 +2,7 @@
   "expo": {
     "name": "SnakeNumbers",
     "slug": "SnakeNumbers",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/SnakeNumbersIcon.png",
     "scheme": "snakenumbers",

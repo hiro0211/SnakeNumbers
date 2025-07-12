@@ -24,7 +24,6 @@ import {
 } from "react-native";
 import AdBanner from "@/components/AdBanner";
 import useInterstitialAd from "@/hooks/useInterstitialAd";
-import useRewardedAd from "@/hooks/useRewardedAd";
 
 const { width, height } = Dimensions.get("window");
 const GRID_SIZE = 16;
@@ -409,13 +408,10 @@ export default function GameScreen() {
   );
   const [level, setLevel] = useState(1);
   const [completedCycles, setCompletedCycles] = useState(0); // 1-9サイクル完了数
-  const [continued, setContinued] = useState(false); // コンティニュー使用フラグ
 
   // 広告フック
   const { showAd: showInterstitialAd, isAdLoaded: isInterstitialAdLoaded } =
     useInterstitialAd();
-  const { showAd: showRewardedAd, isAdLoaded: isRewardedAdLoaded } =
-    useRewardedAd();
 
   // アニメーション
   const achievementOpacity = useRef(new Animated.Value(0)).current;
@@ -423,7 +419,7 @@ export default function GameScreen() {
   const gameLoopRef = useRef<number | null>(null);
   const lastMoveTime = useRef(0);
   const directionRef = useRef<Direction>("RIGHT");
-  const timeUpdateRef = useRef<NodeJS.Timeout | null>(null);
+  const timeUpdateRef = useRef<number | null>(null);
   const gameOverHandled = useRef(false);
 
   // refを使って最新の状態を参照
@@ -432,36 +428,6 @@ export default function GameScreen() {
   const obstaclesRef = useRef<Obstacle[]>([]);
   const nextNumberRef = useRef(1);
   const scoreRef = useRef(0);
-
-  // コンティニュー処理
-  function handleContinue() {
-    // ゲームオーバーフラグをリセット
-    gameOverHandled.current = false;
-
-    // 蛇を少し短くして再開（スコアとnextNumberは保持）
-    const shortenedSnake = snake.slice(0, Math.max(1, snake.length - 3));
-    setSnake(shortenedSnake);
-
-    // refの値を更新
-    nextNumberRef.current = nextNumber;
-    scoreRef.current = score;
-
-    // ゲームを再開するための追加設定
-    setIsFrozen(false);
-    setScoreMultiplier(1);
-    setMultiplierDuration(0);
-    setContinued(true); // コンティニュー使用済み
-
-    // コンティニュー時は現在のスピードを維持（急激な変化を避ける）
-    console.log(`Continue: maintaining current speed of ${speed}ms`);
-    // スピードは変更せずに現在の値を維持
-
-    // 新しい数字を生成（現在の蛇の位置を考慮）
-    generateNumbers(shortenedSnake);
-
-    // ゲーム状態を最後に設定
-    setGameState("playing");
-  }
 
   // 現在のスキンを取得
   const currentSkin = useMemo(
@@ -531,10 +497,6 @@ export default function GameScreen() {
         type: "obstacle",
       };
     });
-
-    // 空のセルを遅延で追加（存在しない場合のみ）
-    const getCell = (key: string): CellInfo => map[key] || emptyCell;
-    map.getCell = getCell;
 
     return map;
   }, [snake, numbers, nextNumber, bonusItems, obstacles]);
@@ -660,10 +622,9 @@ export default function GameScreen() {
     setCurrentStreak(0);
     setComboMultiplier(1);
     gameOverHandled.current = false; // ゲーム開始時にフラグをリセット
-    setContinued(false); // コンティニューフラグもリセット
 
     // refが確実に設定された後に数字を生成
-    setTimeout(() => {
+    window.setTimeout(() => {
       generateNumbers(initialSnake);
     }, 50);
   }, []);
@@ -755,7 +716,7 @@ export default function GameScreen() {
             break;
           case "TIME_FREEZE":
             setIsFrozen(true);
-            setTimeout(() => setIsFrozen(false), 3000); // 3秒間フリーズ
+            window.setTimeout(() => setIsFrozen(false), 3000); // 3秒間フリーズ
             break;
           case "SHRINK":
             // 蛇の長さを半分にする（最低1）
@@ -814,12 +775,12 @@ export default function GameScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
             // 新しいレベルで障害物を生成（3秒後に実行）
-            setTimeout(() => {
+            window.setTimeout(() => {
               // 障害物生成は後でuseEffectで処理
             }, 3000);
 
             // 5秒後にスピードアップ（各レベルアップごと）
-            setTimeout(() => {
+            window.setTimeout(() => {
               setSpeed((prevSpeed) => {
                 const newSpeed = Math.max(prevSpeed - 10, 60); // 10msずつ減少、最低60ms
                 console.log(
@@ -1087,13 +1048,12 @@ export default function GameScreen() {
   // ゲームオーバー処理
   useEffect(() => {
     if (gameState === "gameOver" && !gameOverHandled.current) {
+      console.log("Game over detected, handling...");
       gameOverHandled.current = true;
-      // 広告表示（インタースティシャル or リワード）
-      // コンティニュー未使用かつリワード広告が読み込み済みの場合
-      if (!continued && isRewardedAdLoaded) {
-        // 何もしない（ユーザーの選択を待つ）
-      } else if (!continued && isInterstitialAdLoaded) {
-        // コンティニュー未使用の場合のみインタースティシャル広告を表示
+
+      // インタースティシャル広告を表示
+      if (isInterstitialAdLoaded) {
+        console.log("Showing interstitial ad");
         showInterstitialAd();
       }
 
@@ -1144,7 +1104,7 @@ export default function GameScreen() {
         // Save data
         await saveGameData(newStats, newAchievements, currentSkinId);
 
-        // カスタムゲームオーバーUIを表示（Alertは削除）
+        console.log("Game over processing completed");
       };
 
       handleGameOver();
@@ -1162,9 +1122,7 @@ export default function GameScreen() {
     saveGameData,
     bestStreak,
     achievementOpacity,
-    continued,
     isInterstitialAdLoaded,
-    isRewardedAdLoaded,
     showInterstitialAd,
   ]);
 
@@ -1265,7 +1223,7 @@ export default function GameScreen() {
   // 時間制限数字の更新
   useEffect(() => {
     if (level >= 5 && gameState === "playing") {
-      timeUpdateRef.current = setInterval(() => {
+      timeUpdateRef.current = window.setInterval(() => {
         setNumbers(
           (currentNumbers) =>
             currentNumbers
@@ -1284,13 +1242,15 @@ export default function GameScreen() {
       }, 1000);
     } else {
       if (timeUpdateRef.current) {
-        clearInterval(timeUpdateRef.current);
+        window.clearInterval(timeUpdateRef.current);
+        timeUpdateRef.current = null;
       }
     }
 
     return () => {
       if (timeUpdateRef.current) {
-        clearInterval(timeUpdateRef.current);
+        window.clearInterval(timeUpdateRef.current);
+        timeUpdateRef.current = null;
       }
     };
   }, [level, gameState]);
@@ -1298,7 +1258,7 @@ export default function GameScreen() {
   // 移動障害物の更新
   useEffect(() => {
     if (level >= 8 && gameState === "playing") {
-      const moveObstaclesInterval = setInterval(() => {
+      const moveObstaclesInterval = window.setInterval(() => {
         setObstacles((currentObstacles) =>
           currentObstacles.map((obstacle) => {
             if (!obstacle.isMoving || !obstacle.direction) return obstacle;
@@ -1346,7 +1306,7 @@ export default function GameScreen() {
         );
       }, 2000); // 2秒ごとに移動
 
-      return () => clearInterval(moveObstaclesInterval);
+      return () => window.clearInterval(moveObstaclesInterval);
     }
   }, [level, gameState]);
 
@@ -1354,7 +1314,7 @@ export default function GameScreen() {
   useEffect(() => {
     if (level > 1 && gameState === "playing") {
       // 少し遅延させて障害物を生成（レベルアップから3秒後）
-      const generateObstaclesTimeout = setTimeout(() => {
+      const generateObstaclesTimeout = window.setTimeout(() => {
         const occupiedPositions = [
           ...snake,
           ...numbers.map((n) => n.position),
@@ -1404,7 +1364,7 @@ export default function GameScreen() {
         setObstacles(newObstacles);
       }, 3000); // 3秒後に障害物を生成
 
-      return () => clearTimeout(generateObstaclesTimeout);
+      return () => window.clearTimeout(generateObstaclesTimeout);
     }
   }, [level, gameState, snake, numbers, bonusItems]);
 
@@ -1630,47 +1590,21 @@ export default function GameScreen() {
             <Text style={styles.currentScoreText}>Score: {score}</Text>
             <Text style={styles.highScoreText}>High Score: {highScore}</Text>
             <View style={styles.dialogButtons}>
-              {!continued && (
-                <TouchableOpacity
-                  style={[
-                    styles.continueButton,
-                    !isRewardedAdLoaded && styles.disabledButton,
-                  ]}
-                  onPress={async () => {
-                    try {
-                      console.log(
-                        "Continue button pressed - showing rewarded ad"
-                      );
-                      const result = await showRewardedAd();
-                      console.log("Rewarded ad result:", result);
-                      if (result) {
-                        // 広告視聴成功時のみコンティニュー
-                        console.log(
-                          "Ad watched successfully - continuing game"
-                        );
-                        handleContinue();
-                      } else {
-                        // 広告視聴失敗時はゲームオーバー画面を維持
-                        console.log(
-                          "Rewarded ad was not completed - staying on game over screen"
-                        );
-                      }
-                    } catch (error) {
-                      console.error("Error showing rewarded ad:", error);
-                    }
-                  }}
-                  disabled={!isRewardedAdLoaded}
-                >
-                  <Text style={styles.retryButtonText}>Continue (Ad)</Text>
-                </TouchableOpacity>
-              )}
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={() => {
-                  setContinued(false); // コンティニューフラグをリセット
+                  console.log("Retry button pressed - restarting game");
+                  // ゲームオーバーフラグをリセット
+                  gameOverHandled.current = false;
+
+                  // ゲーム初期化
                   initializeGame();
-                  // ゲーム状態は初期化後に設定
-                  setTimeout(() => setGameState("playing"), 100);
+
+                  // ゲーム状態を設定
+                  window.setTimeout(() => {
+                    setGameState("playing");
+                    console.log("Game restarted successfully");
+                  }, 100);
                 }}
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
@@ -2094,15 +2028,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
-  },
-  continueButton: {
-    backgroundColor: "#3b82f6",
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  disabledButton: {
-    backgroundColor: "#4b5563",
   },
   retryButtonText: {
     color: "#ffffff",

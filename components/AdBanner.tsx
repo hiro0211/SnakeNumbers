@@ -4,10 +4,8 @@ import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 
 const { width } = Dimensions.get("window");
 
-// Google公式のテスト広告ユニットID
-const adUnitId = __DEV__
-  ? "ca-app-pub-3940256099942544/2435281174" // Googleのテスト用アダプティブバナー
-  : process.env.EXPO_PUBLIC_ADMOB_BANNER_ID!;
+// .envファイルから本番用の広告ユニットIDを読み込む
+const adUnitId = process.env.EXPO_PUBLIC_ADMOB_BANNER_ID!;
 
 export default function AdBanner() {
   return (
